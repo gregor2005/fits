@@ -18,7 +18,8 @@
 	</tools>
 		
 	<output>
-		<dataConsolidator class="edu.harvard.hul.ois.fits.consolidation.OISConsolidator"/>
+		<!-- <dataConsolidator class="edu.harvard.hul.ois.fits.consolidation.OISConsolidator"/> -->
+		<dataConsolidator class="edu.harvard.hul.ois.fits.consolidation.ResolvConflictConsolidator"/>
 		<display-tool-output>false</display-tool-output>
 		<report-conflicts>true</report-conflicts>	
 		<validate-tool-output>true</validate-tool-output>
