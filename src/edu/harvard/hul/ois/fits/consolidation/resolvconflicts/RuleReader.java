@@ -9,12 +9,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
+
 import edu.harvard.hul.ois.fits.Fits;
 
 public class RuleReader {
 	private static RuleReader reader = null;
 	private HashMap<String, List<Rule>> output = null;
 	private static final String RULES_CONFIG = "rules.conf";
+	private static Logger log = Logger.getLogger(RuleReader.class);
 
 	private RuleReader() {
 		//
@@ -36,9 +39,8 @@ public class RuleReader {
 	}
 
 	private HashMap<String, List<Rule>> readRules() {
-		// TODO throw execption on error
 		String filename = Fits.FITS_HOME + RULES_CONFIG;
-		System.out.println("-------------read line: " + filename);
+		log.debug("read line: " + filename);
 		BufferedReader br = null;
 		List<String> lines = new ArrayList<>();
 		try {
@@ -50,19 +52,19 @@ public class RuleReader {
 				line = br.readLine();
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("problem during file read");
+			return null;
 		} finally {
 			if (br != null) {
 				try {
 					br.close();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					log.error("problem during file read");
+					return null;
 				}
 			}
 		}
-		System.out.println("-------all lines where read");
+		log.debug("all lines where read");
 		// syntax: rulenname,mimetype,version,conflicted field,prevent tool,tool
 		// version
 		// example: rule1,application/pdf,1.4,creatingApplicationName,Jhove,1.5
@@ -88,14 +90,13 @@ public class RuleReader {
 						} else {
 							outputRules.get(rule.getMimetypeNeeded()).add(rule);
 						}
-						System.out.println("------stored rule: "+rule.toString());
+						log.debug("stored rule: " + rule.toString());
 					} else {
-						System.out.println("!!! wrong rule, not 6 tokens: "
-								+ line);
+						log.error("!!! wrong rule, not 6 tokens: " + line);
 					}
 				}
 			} else {
-				System.out.println("-------comment found in rule: " + line);
+				log.debug("comment found in rule: " + line);
 			}
 		}
 		return outputRules;

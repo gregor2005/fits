@@ -4,22 +4,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
 public class ResolvConflicts {
-	
-	// TODO logging einbauen
 
 	private static List<Element> fitsElements = new ArrayList<Element>();
+	private static Logger log = Logger.getLogger(ResolvConflicts.class);
 
 	public static List<Element> prepareElementList(List<Element> fitsElements2,
 			String mimetype, String fileVersion) {
 		fitsElements = new ArrayList<Element>();
-		// if (fitsElements2.size() > 1) {
-		System.out.println("+++++++ conflicts found = " + fitsElements2.size());
+		if (fitsElements2 == null) {
+			fitsElements = checkForConflictsAndMark(fitsElements2);
+			return fitsElements;
+		}
+		log.debug("conflicts found = " + fitsElements2.size());
 		if (fitsElements2.size() > 2) {
-			System.out.println("+++++++ conflicts found more than 2: "
+			log.debug("conflicts found more than 2: "
 					+ fitsElements2.get(0).getValue());
 			if (!fitsElements2.get(0).getValue()
 					.equals(fitsElements2.get(1).getValue())
@@ -27,44 +30,36 @@ public class ResolvConflicts {
 							.equals(fitsElements2.get(2).getValue())
 					&& !fitsElements2.get(0).getValue()
 							.equals(fitsElements2.get(2).getValue())) {
-				System.out.println("++++++++found 3 different values");
-				// System.exit(1);
+				log.debug("found 3 different values");
 			}
 			for (Element e : fitsElements2) {
-				System.out.println("+++++++ element: " + e.getValue());
+				log.debug("element: " + e.getValue());
 			}
-			// System.exit(1);
 		}
 		// } -----------------------------------------------------------
 
-		if (fitsElements2 == null) {
-			fitsElements = checkForConflictsAndMark(fitsElements2);
-			return fitsElements;
-		}
 		RuleReader rulereader = RuleReader.getInstance();
 		HashMap<String, List<Rule>> rules = rulereader.getRules();
 
 		if (rules == null) {
-			System.out.println("------------rules are null");
+			log.error("rules are null");
 			fitsElements = checkForConflictsAndMark(fitsElements2);
 			return fitsElements;
 		}
 
 		if (!rules.keySet().contains(mimetype)) {
-			System.out
-					.println("------------mimetype and version numer not found");
+			log.debug("mimetype and version numer not found");
 			fitsElements = checkForConflictsAndMark(fitsElements2);
 			return fitsElements;
 		} else {
-			System.out.println("------------found mimetype");
+			log.debug("found mimetype");
 		}
 		List<Rule> mimetypeRules = rules.get(mimetype);
 		if (mimetypeRules.size() < 1) {
-			System.out.println("------------no rules in mimetype found");
+			log.debug("no rules in mimetype found");
 			fitsElements = checkForConflictsAndMark(fitsElements2);
 			return fitsElements;
 		}
-		System.out.println("-----------start");
 		if (fitsElements2.size() > 1) {
 			boolean doRemove = false;
 			for (Rule rule : mimetypeRules) {
@@ -72,34 +67,27 @@ public class ResolvConflicts {
 					doRemove = true;
 				}
 				if (rule.getFileVersionNeeded().equals(fileVersion)) {
-					System.out.println("---------------iterate list size: "
-							+ fitsElements.size());
+					log.debug("iterate list size: " + fitsElements.size());
 					for (Element e : fitsElements2) {
-						System.out.println("-----process element: "
-								+ e.getName());
+						log.debug("process element: " + e.getName());
 						boolean toolFound = false;
 						boolean toolVersionFound = false;
 
 						if (e.getName().equals(rule.getField())) {
-							System.out.println("-----field found: "
-									+ e.getName());
+							log.debug("field found: " + e.getName());
 							for (Object a : e.getAttributes()) {
 								if (a instanceof Attribute) {
 									Attribute attribute = (Attribute) a;
-									System.out.println("------------name: "
-											+ attribute.getName());
-									System.out.println("------------value: "
-											+ attribute.getValue());
+									log.debug("name: " + attribute.getName());
+									log.debug("value: " + attribute.getValue());
 									if (attribute.getValue().equals(
 											rule.getToolName())) {
-										System.out
-												.println("-----------tool found");
+										log.debug("tool found");
 										toolFound = true;
 									}
 									if (attribute.getValue().equals(
 											rule.getToolVersion())) {
-										System.out
-												.println("-----------tool version found");
+										log.debug("tool version found");
 										toolVersionFound = true;
 									}
 								}
@@ -107,14 +95,13 @@ public class ResolvConflicts {
 						}
 						if (toolFound && toolVersionFound) {
 							// ommit output
-							System.out.println("-----------ommit output");
+							log.info("ommit output");
 							if (doRemove) {
 								fitsElements.remove(e);
 							}
 						} else {
 							if (!doRemove) {
-								System.out
-										.println("-----------add element to output list");
+								log.debug("add element to output list");
 								fitsElements.add(e);
 							}
 						}
@@ -126,16 +113,15 @@ public class ResolvConflicts {
 			return fitsElements;
 		}
 		if (fitsElements.size() > 1) {
-			System.out.println("+++++++ conflicts still exists");
+			log.debug("conflicts still exists");
 		}
 		fitsElements = checkForConflictsAndMark(fitsElements);
-		System.out.println("-----------end");
 		return fitsElements;
 	}
 
 	private static List<Element> checkForConflictsAndMark(
 			List<Element> fitsElements2) {
-		System.out.println("-----------checkForConflictsAndMark start");
+		log.info("checkForConflictsAndMark start");
 		if (fitsElements2.size() > 1) {
 			HashMap<String, String> values = new HashMap<>();
 			boolean stillConflicted = false;
